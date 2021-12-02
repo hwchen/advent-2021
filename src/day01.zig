@@ -1,9 +1,23 @@
 // previously allocated.
 // This solution follows https://github.com/SpexGuy/Advent2021/blob/main/src/day01.zig,
 // which uses an array as the window instead of separate vars.
+//
+// Looked at https://felixge.de/2021/12/01/advent-of-go-profiling-2021-day-1-1/ on profiling,
+// but looks like everything is optimized away in releasea-fast.
+//
+// In release-safe parseInt is inlined but takes up the bulk of the calls.
+//
+// using
+// ```
+// sudo perf record -F 5000 --cal-graph dwarf zig-out/bin/day01
+// sudo perf report
+// ```
 
 const std = @import("std");
 const data = @embedFile("../input/day01.txt");
+
+// required to print if release-fast
+pub const log_level: std.log.Level = .info;
 
 pub fn main() anyerror!void {
     var part01: usize = 0;
