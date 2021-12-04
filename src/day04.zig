@@ -119,26 +119,22 @@ const Board = struct {
     }
 };
 
-const Boards = ArrayList(Board);
-const Draws = ArrayList(usize);
-
 const DrawResult = union(enum) {
     winner: Score,
     no_winner,
     no_more_draws,
 };
-// winning score
 const Score = usize;
 
 const Bingo = struct {
     draw_idx: usize = 0,
-    draws: Draws,
-    boards: Boards,
+    draws: ArrayList(usize),
+    boards: ArrayList(Board),
 
     fn init(alloc: *Allocator) Bingo {
         return Bingo{
-            .draws = Draws.init(alloc),
-            .boards = Boards.init(alloc),
+            .draws = ArrayList(usize).init(alloc),
+            .boards = ArrayList(Board).init(alloc),
         };
     }
 
