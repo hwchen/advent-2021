@@ -68,51 +68,39 @@ pub fn main() anyerror!void {
 
 const Board = struct {
     cells: [25]usize = .{0} ** 25,
-    marked: [25]bool = .{false} ** 25,
+    marked: u25 = 0,
     is_finished: bool = false,
 
     fn mark(self: *Board, n: usize) void {
         // check all cells, not just the first match
         for (self.cells) |cell, i| {
             if (cell == n) {
-                self.marked[i] = true;
+                const bit = @as(u25, 1) << @intCast(u5, i);
+                self.marked |= bit;
             }
         }
     }
 
     fn isWinner(self: *Board) bool {
-        return self.rowFinished() or self.colFinished();
-    }
+        const successes = [_]u25{
+            0b1000010000100001000010000,
+            0b0100001000010000100001000,
+            0b0010000100001000010000100,
+            0b0001000010000100001000010,
+            0b0000100001000010000100001,
+            0b1111100000000000000000000,
+            0b0000011111000000000000000,
+            0b0000000000111110000000000,
+            0b0000000000000001111100000,
+            0b0000000000000000000011111,
+        };
 
-    fn rowFinished(self: Board) bool {
-        var row_idx: usize = 0;
-        while (row_idx < 5) : (row_idx += 1) {
-            var row_res = true;
-            var col_idx: usize = 0;
-            while (col_idx < 5) : (col_idx += 1) {
-                // switch to false if any unmarked
-                row_res = row_res and self.marked[5 * row_idx + col_idx];
-            }
-            if (row_res) {
+        for (successes) |pattern| {
+            if (pattern & self.marked == pattern) {
                 return true;
             }
         }
-        return false;
-    }
 
-    fn colFinished(self: Board) bool {
-        var col_idx: usize = 0;
-        while (col_idx < 5) : (col_idx += 1) {
-            var col_res = true;
-            var row_idx: usize = 0;
-            while (row_idx < 5) : (row_idx += 1) {
-                // switch to false if any unmarked
-                col_res = col_res and self.marked[5 * row_idx + col_idx];
-            }
-            if (col_res) {
-                return true;
-            }
-        }
         return false;
     }
 
@@ -120,7 +108,9 @@ const Board = struct {
     fn score(self: Board, n: usize) usize {
         var total: usize = 0;
         for (self.cells) |cell, i| {
-            if (!self.marked[i]) {
+            // mask to check bit at i
+            const bit = @as(u25, 1) << @intCast(u5, i);
+            if (self.marked & bit == 0) {
                 total += cell;
             }
         }
@@ -162,6 +152,8 @@ const Bingo = struct {
             return .no_more_draws;
         }
         // takes the last winning score for this round of draws
+        // TODO prompt is vague, but will there be problems with
+        // multiple winners in a round?
         var score: ?Score = null;
 
         for (self.boards.items) |*board| {
@@ -175,6 +167,7 @@ const Bingo = struct {
             // check for winner
             if (board.isWinner()) {
                 score = board.score(self.draws.items[self.draw_idx]);
+                // TODO: should board be removed instead?
                 board.is_finished = true;
             }
         }
