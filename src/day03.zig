@@ -44,19 +44,21 @@ fn part01() anyerror!void {
     // find most common bit, pack into `gamma`
     // least common bit, pack into `epsilon`
     var gamma: usize = 0;
-    var epsilon: usize = 0;
     for (bit_counts) |count, i| {
-        // bit place is counted from the reverse direction of i
-        const bit_place = bit_counts.len - 1 - i;
+        // bit place is counted from the reverse direction of i.
+        // ok to truncate because we know the number of places in
+        // the input.
+        const bit_place = @truncate(u6, bit_counts.len - 1 - i);
+        const bit_val = @as(usize, 1) << bit_place;
+
         if (count >= num_lines / 2) {
-            gamma += try std.math.powi(usize, 2, bit_place);
-        } else {
-            epsilon += try std.math.powi(usize, 2, bit_place);
+            gamma += bit_val;
         }
     }
 
-    // how to do this with a mask?
-    //const epsilon = ~gamma;
+    // mask to set least significant bits. shift left and subtract 1
+    const mask: usize = (@as(usize, 1) << @as(u6, bit_counts.len)) - 1;
+    const epsilon = ~gamma & mask;
 
     std.log.info("part 01: {d}", .{epsilon * gamma});
 }
