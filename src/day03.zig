@@ -23,7 +23,7 @@ pub fn main() anyerror!void {
     try part01();
 }
 
-fn part01() anyerror!void {
+fn part01() !void {
     const num_len = comptime std.mem.indexOf(u8, data, "\n").?;
 
     // counts of 1's. 0's are calculated by subtracting from num_lines
@@ -52,7 +52,8 @@ fn part01() anyerror!void {
         const bit_val = @as(usize, 1) << bit_place;
 
         if (count >= num_lines / 2) {
-            gamma += bit_val;
+            // using `or` is like adding.
+            gamma |= bit_val;
         }
     }
 
@@ -62,3 +63,35 @@ fn part01() anyerror!void {
 
     std.log.info("part 01: {d}", .{epsilon * gamma});
 }
+
+// part 02
+// requires allocation because we have to make 2 passes,
+// first count and then second filter.
+//part02() !void {
+//    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+//    defer arena.deinit();
+//    const alloc = arena.allocator();
+//
+//    // TODO don't reallocate on each loop
+//    var buf = std.ArrayList(usize).init(alloc);
+//
+//    // Convert str(binary) to usize
+//    var lines = std.mem.tokenize(u8, data, "\n");
+//    while (lines.next()) |line| {
+//        var x: usize = 0;
+//        for (line) |c, i| {
+//            const bit_place = @truncate(u6, bit_counts.len - 1 - i);
+//            const bit_val = @as(usize, 1) << bit_place;
+//
+//            if (count >= num_lines / 2) {
+//                x += bit_val;
+//            }
+//        }
+//        try buf.append(x);
+//    }
+//
+//    // find oxygen rating by filtering
+//    for (
+//
+//    std.log.info("part 02: {d}", .{epsilon * gamma});
+//}
