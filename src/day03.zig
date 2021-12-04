@@ -88,12 +88,12 @@ fn part02() !void {
 
     // find oxygen rating by filtering
     // bits are counted from left to right here
-    std.log.info("filter for oxygen", .{});
+    std.log.info("filter for oxygen, most common bit", .{});
     const oxygen = try filter_with(alloc, input, num_len, most_common);
 
     // find CO2 rating by filtering
     // bits are counted from left to right here
-    std.log.info("filter for c02", .{});
+    std.log.info("filter for c02, least common bit", .{});
     const co2 = try filter_with(alloc, input, num_len, least_common);
 
     std.log.info("part 02: {d}", .{oxygen * co2});
@@ -116,16 +116,16 @@ fn filter_with(alloc: *Allocator, input: []const usize, num_len: usize, f: fn (c
             }
         }
 
-        // x_common is least_common or most_common, depending on
-        // which fn is passed in.
-        const x_common = @boolToInt(f(count, buf.items.len));
-        std.debug.print("x_common: {d}\n", .{x_common});
+        // select_bit is 0 or 1. Depending on fn f, it's selected by
+        // either least_common or most_common.
+        const select_bit = @boolToInt(f(count, buf.items.len));
+        std.debug.print("select_bit: {d}, position (1-idx): {d}\n", .{ select_bit, i + 1 });
 
         // Now filter for least common value at bit position
         for (buf.items) |x| {
             // mask for bit position, then shift it all the way to right
             // so it can be checked easily against least as 1 or 0.
-            if ((x & bit) >> @intCast(u6, num_len - 1 - i) == x_common) {
+            if ((x & bit) >> @intCast(u6, num_len - 1 - i) == select_bit) {
                 try buf_filtered.append(x);
             }
         }
