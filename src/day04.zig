@@ -36,19 +36,40 @@ pub fn main() anyerror!void {
 
     var bingo = try parse_input(alloc, data);
     var part01: ?usize = null;
+    var part02: ?usize = null;
+    var found_first_winner = false;
     while (true) {
-        if (bingo.drawNext()) |score| {
-            part01 = score;
-            break;
+        switch (bingo.drawNext()) {
+            .winner => |score| {
+                if (found_first_winner) {
+                    // if not first winner, update until last winner
+                    part02 = score;
+                    std.log.info("Draw: winner, part 02 updated", .{});
+                } else {
+                    // first time, track the first winner
+                    part01 = score;
+                    std.log.info("Draw: winner, part 01 updated", .{});
+                }
+                found_first_winner = true;
+            },
+            .no_winner => {
+                std.log.info("Draw: no winner", .{});
+                continue;
+            },
+            .no_more_draws => {
+                std.log.info("Draw: no more draws", .{});
+                break;
+            },
         }
     }
 
-    std.log.info("part01: {d}", .{part01});
+    std.log.info("part01: {d}, part02: {d}", .{ part01, part02 });
 }
 
 const Board = struct {
     cells: [25]usize = .{0} ** 25,
     marked: [25]bool = .{false} ** 25,
+    is_finished: bool = false,
 
     fn mark(self: *Board, n: usize) void {
         // check all cells, not just the first match
@@ -59,7 +80,7 @@ const Board = struct {
         }
     }
 
-    fn isWinner(self: Board) bool {
+    fn isWinner(self: *Board) bool {
         return self.rowFinished() or self.colFinished();
     }
 
@@ -70,7 +91,7 @@ const Board = struct {
             var col_idx: usize = 0;
             while (col_idx < 5) : (col_idx += 1) {
                 // switch to false if any unmarked
-                row_res = row_res and self.marked[row_idx + col_idx];
+                row_res = row_res and self.marked[5 * row_idx + col_idx];
             }
             if (row_res) {
                 return true;
@@ -86,7 +107,7 @@ const Board = struct {
             var row_idx: usize = 0;
             while (row_idx < 5) : (row_idx += 1) {
                 // switch to false if any unmarked
-                col_res = col_res and self.marked[col_idx + row_idx];
+                col_res = col_res and self.marked[5 * row_idx + col_idx];
             }
             if (col_res) {
                 return true;
@@ -111,13 +132,18 @@ const Board = struct {
 const Boards = ArrayList(Board);
 const Draws = ArrayList(usize);
 
+const DrawResult = union(enum) {
+    winner: Score,
+    no_winner,
+    no_more_draws,
+};
+// winning score
+const Score = usize;
+
 const Bingo = struct {
-    curr_idx: usize = 0,
+    draw_idx: usize = 0,
     draws: Draws,
     boards: Boards,
-
-    // winning score
-    const Score = usize;
 
     fn init(alloc: *Allocator) Bingo {
         return Bingo{
@@ -131,21 +157,32 @@ const Bingo = struct {
         self.boards.deinit();
     }
 
-    fn drawNext(self: *Bingo) ?Score {
+    fn drawNext(self: *Bingo) DrawResult {
+        if (self.draw_idx >= self.draws.items.len) {
+            return .no_more_draws;
+        }
+        // takes the last winning score for this round of draws
+        var score: ?Score = null;
+
         for (self.boards.items) |*board| {
+            if (board.is_finished) {
+                continue;
+            }
+
             // update from draw
-            board.mark(self.draws.items[self.curr_idx]);
+            board.mark(self.draws.items[self.draw_idx]);
 
             // check for winner
             if (board.isWinner()) {
-                return board.score(self.draws.items[self.curr_idx]);
+                score = board.score(self.draws.items[self.draw_idx]);
+                board.is_finished = true;
             }
         }
 
         // prep for next draw
-        self.curr_idx += 1;
+        self.draw_idx += 1;
 
-        return null;
+        return if (score) |s| .{ .winner = s } else .no_winner;
     }
 };
 
