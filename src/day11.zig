@@ -46,25 +46,36 @@ pub fn main() anyerror!void {
     }
     std.debug.print("{any}\n", .{grid});
 
+    // part 1
     // iterate a generation, then count flashes
-    {
-        var step: usize = 0;
-        while (step < PART_1_STEP_LIMIT) : (step += 1) {
-            var stack = ArrayList(Point).init(alloc);
-            // first scan
-            try initialScan(&grid, &stack);
+    var step: usize = 0;
+    while (step < PART_1_STEP_LIMIT) : (step += 1) {
+        var stack = ArrayList(Point).init(alloc);
+        // first scan
+        try initialScan(&grid, &stack);
 
-            // then floodfill
-            try floodFill(&grid, &stack);
+        // then floodfill
+        try floodFill(&grid, &stack);
 
-            // then score
-            part1 += score(grid);
+        // then score
+        part1 += score(grid);
 
-            std.debug.print("{any}\n", .{grid});
-        }
+        std.debug.print("{any}\n", .{grid});
+    }
+
+    // part 2
+    // continue iterating until octopuses flash simultaneously
+    while (!allFlash(grid)) : (step += 1) {
+        var stack = ArrayList(Point).init(alloc);
+        // first scan
+        try initialScan(&grid, &stack);
+
+        // then floodfill
+        try floodFill(&grid, &stack);
     }
 
     std.log.info("part1: {}", .{part1});
+    std.log.info("part2: {}", .{step});
 }
 
 // grid has one cell border
@@ -138,3 +149,16 @@ const Point = struct {
     i: usize,
     j: usize,
 };
+
+fn allFlash(grid: [12][12]u4) bool {
+    var i: usize = 1;
+    while (i <= 10) : (i += 1) {
+        var j: usize = 1;
+        while (j <= 10) : (j += 1) {
+            if (grid[i][j] != 0) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
