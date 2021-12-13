@@ -1,8 +1,6 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 const ArrayList = std.ArrayList;
-const parseInt = std.fmt.parseInt;
-const asc_usize = std.sort.asc(usize);
 
 const data = @embedFile("../input/day10.txt");
 
