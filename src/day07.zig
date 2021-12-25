@@ -15,7 +15,7 @@ pub const log_level: std.log.Level = .info;
 pub fn main() anyerror!void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     defer arena.deinit();
-    const alloc = &arena.allocator;
+    const alloc = arena.allocator();
 
     var crabs = blk: {
         var res = ArrayList(usize).init(alloc);

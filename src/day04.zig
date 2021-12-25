@@ -32,7 +32,7 @@ pub const log_level: std.log.Level = .info;
 pub fn main() anyerror!void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     defer arena.deinit();
-    const alloc = &arena.allocator;
+    const alloc = arena.allocator();
 
     var bingo = try parse_input(alloc, data);
     var part01: ?usize = null;
@@ -131,7 +131,7 @@ const Bingo = struct {
     draws: ArrayList(usize),
     boards: ArrayList(Board),
 
-    fn init(alloc: *Allocator) Bingo {
+    fn init(alloc: Allocator) Bingo {
         return Bingo{
             .draws = ArrayList(usize).init(alloc),
             .boards = ArrayList(Board).init(alloc),
@@ -175,7 +175,7 @@ const Bingo = struct {
     }
 };
 
-fn parse_input(alloc: *Allocator, input: []const u8) !Bingo {
+fn parse_input(alloc: Allocator, input: []const u8) !Bingo {
     var bingo = Bingo.init(alloc);
 
     // Split into sections, first one is draws, rest are boards.

@@ -67,7 +67,7 @@ fn part01() !void {
 fn part02() !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     defer arena.deinit();
-    const alloc = &arena.allocator;
+    const alloc = arena.allocator();
 
     const num_len = comptime std.mem.indexOf(u8, data, "\n").?;
 
@@ -99,7 +99,7 @@ fn part02() !void {
     std.log.info("part 02: {d}", .{oxygen * co2});
 }
 
-fn filter_with(alloc: *Allocator, input: []const usize, num_len: usize, f: fn (count: usize, buf_len: usize) bool) !usize {
+fn filter_with(alloc: Allocator, input: []const usize, num_len: usize, f: fn (count: usize, buf_len: usize) bool) !usize {
     var buf = std.ArrayList(usize).init(alloc);
     try buf.appendSlice(input);
 
