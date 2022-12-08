@@ -1,8 +1,7 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 const ArrayList = std.ArrayList;
-const parseInt = std.fmt.parseInt;
-const PointSet = std.AutoHashMap(Point, void);
+const PointCount = std.AutoHashMap(Point, u64);
 const data = @embedFile("input/day05.txt");
 
 // required to print if release-fast
@@ -19,76 +18,96 @@ pub fn main() !void {
 }
 
 fn run(input: []const u8, alloc: Allocator) !struct { part01: u64, part02: u64 } {
-    var lines = ArrayList(Line).init(alloc);
-    defer lines.deinit();
+    var pointcount01 = PointCount.init(alloc);
+    var pointcount02 = PointCount.init(alloc);
+    defer pointcount01.deinit();
+    defer pointcount02.deinit();
 
     var rows = std.mem.tokenize(u8, input, "\n");
     while (rows.next()) |row| {
         const line = try parseLine(row);
-        // for part 1, only use horizontal and vertical lines
+        // part01, only use horizontal and vertical lines
         if (isHv(line)) {
-            try lines.append(line);
+            try addLineToPointCount(line, &pointcount01);
+        }
+        try addLineToPointCount(line, &pointcount02);
+    }
+
+    var part01: u64 = 0;
+    var part01_it = pointcount01.valueIterator();
+    while (part01_it.next()) |count| {
+        if (count.* >= 2) {
+            part01 += 1;
         }
     }
 
-    var overlaps = PointSet.init(alloc);
-    defer overlaps.deinit();
-
-    var i: usize = 0;
-    while (i < lines.items.len) : (i += 1) {
-        var j: usize = i + 1;
-        while (j < lines.items.len) : (j += 1) {
-            try updateOverlaps(lines.items[i], lines.items[j], &overlaps);
+    var part02: u64 = 0;
+    var part02_it = pointcount02.valueIterator();
+    while (part02_it.next()) |count| {
+        if (count.* >= 2) {
+            part02 += 1;
         }
     }
 
-    return .{ .part01 = @as(u64, overlaps.count()), .part02 = 0 };
+    return .{ .part01 = part01, .part02 = part02 };
+}
+
+fn addLineToPointCount(line: Line, pointcount: *PointCount) !void {
+    // if horiz or vertical, then the x or y does not advance
+    // diagonals are only 45 degree, where both x and y advance one
+
+    const point1 = line.point1;
+    const point2 = line.point2;
+
+    if (point1.x == point2.x) {
+        // vertical line
+        var end: u32 = std.math.max(point1.y, point2.y);
+        var idx: u32 = std.math.min(point1.y, point2.y);
+        while (idx <= end) : (idx += 1) {
+            try updatePointCount(Point{ .x = point1.x, .y = idx }, pointcount);
+        }
+    } else if (point1.y == point2.y) {
+        // vertical line
+        var end: u32 = std.math.max(point1.x, point2.x);
+        var idx: u32 = std.math.min(point1.x, point2.x);
+        while (idx <= end) : (idx += 1) {
+            try updatePointCount(Point{ .x = idx, .y = point1.y }, pointcount);
+        }
+    } else {
+        // diagonal
+        var x = point1.x;
+        var y = point1.y;
+
+        while (x != point2.x and y != point2.y) {
+            try updatePointCount(Point{ .x = x, .y = y }, pointcount);
+            // step towards point2
+            if (x < point2.x) x += 1 else x -= 1;
+            if (y < point2.y) y += 1 else y -= 1;
+        }
+
+        // add last point
+        try updatePointCount(point2, pointcount);
+    }
+}
+
+fn updatePointCount(point: Point, pointcount: *PointCount) !void {
+    const entry = try pointcount.getOrPut(point);
+    if (entry.found_existing) {
+        entry.value_ptr.* += 1;
+    } else {
+        entry.value_ptr.* = 1;
+    }
 }
 
 const Line = struct {
     point1: Point,
     point2: Point,
-
-    fn min_x(self: Line) usize {
-        return std.math.min(self.point1.x, self.point2.x);
-    }
-
-    fn max_x(self: Line) usize {
-        return std.math.max(self.point1.x, self.point2.x);
-    }
-
-    fn min_y(self: Line) usize {
-        return std.math.min(self.point1.y, self.point2.y);
-    }
-
-    fn max_y(self: Line) usize {
-        return std.math.max(self.point1.y, self.point2.y);
-    }
 };
 
 const Point = struct {
-    x: usize,
-    y: usize,
+    x: u32,
+    y: u32,
 };
-
-fn updateOverlaps(line1: Line, line2: Line, overlaps: *PointSet) !void {
-    // check where x ranges overlap
-    // check where y ranges overlap
-    const x_overlap = [2]usize{ std.math.max(line1.min_x(), line2.min_x()), std.math.min(line1.max_x(), line2.max_x()) };
-    const y_overlap = [2]usize{ std.math.max(line1.min_y(), line2.min_y()), std.math.min(line1.max_y(), line2.max_y()) };
-
-    // generate points
-    var x: usize = x_overlap[0];
-    while (x <= x_overlap[1]) : (x += 1) {
-        var y: usize = y_overlap[0];
-        while (y <= y_overlap[1]) : (y += 1) {
-            try overlaps.put(Point{
-                .x = x,
-                .y = y,
-            }, {});
-        }
-    }
-}
 
 // horizontal or vertical lines
 fn isHv(line: Line) bool {
@@ -97,21 +116,16 @@ fn isHv(line: Line) bool {
 
 fn parseLine(row: []const u8) !Line {
     // parse a row into a Line
-    var points = std.mem.split(u8, row, " -> ");
-    const point1 = points.next().?;
-    const point2 = points.next().?;
-
-    var point1_xy = std.mem.split(u8, point1, ",");
-    var point2_xy = std.mem.split(u8, point2, ",");
+    var row_it = std.mem.tokenize(u8, row, " ->,");
 
     return Line{
         .point1 = Point{
-            .x = try parseInt(usize, point1_xy.next().?, 10),
-            .y = try parseInt(usize, point1_xy.next().?, 10),
+            .x = try std.fmt.parseInt(u32, row_it.next().?, 10),
+            .y = try std.fmt.parseInt(u32, row_it.next().?, 10),
         },
         .point2 = Point{
-            .x = try parseInt(usize, point2_xy.next().?, 10),
-            .y = try parseInt(usize, point2_xy.next().?, 10),
+            .x = try std.fmt.parseInt(u32, row_it.next().?, 10),
+            .y = try std.fmt.parseInt(u32, row_it.next().?, 10),
         },
     };
 }
@@ -131,5 +145,5 @@ test "test_day05" {
     ;
     const out = try run(input, std.testing.allocator);
     try std.testing.expectEqual(out.part01, 5);
-    try std.testing.expectEqual(out.part02, 0);
+    try std.testing.expectEqual(out.part02, 12);
 }
