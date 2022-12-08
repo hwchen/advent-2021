@@ -5,50 +5,44 @@ const parseInt = std.fmt.parseInt;
 const PointSet = std.AutoHashMap(Point, void);
 const data = @embedFile("input/day05.txt");
 
-// from prompt
-//const data =
-//    \\0,9 -> 5,9
-//    \\8,0 -> 0,8
-//    \\9,4 -> 3,4
-//    \\2,2 -> 2,1
-//    \\7,0 -> 7,4
-//    \\6,4 -> 2,0
-//    \\0,9 -> 2,9
-//    \\3,4 -> 1,4
-//    \\0,0 -> 8,8
-//    \\5,5 -> 8,2
-//;
-
 // required to print if release-fast
 pub const log_level: std.log.Level = .info;
 
-pub fn main() anyerror!void {
+pub fn main() !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     defer arena.deinit();
     const alloc = arena.allocator();
 
-    var lines = ArrayList(Line).init(alloc);
+    const out = try run(data, alloc);
 
-    var rows = std.mem.tokenize(u8, data, "\n");
+    std.log.info("part01: {d}, part02: {d}", .{ out.part01, out.part02 });
+}
+
+fn run(input: []const u8, alloc: Allocator) !struct { part01: u64, part02: u64 } {
+    var lines = ArrayList(Line).init(alloc);
+    defer lines.deinit();
+
+    var rows = std.mem.tokenize(u8, input, "\n");
     while (rows.next()) |row| {
         const line = try parseLine(row);
         // for part 1, only use horizontal and vertical lines
-        if (is_hv(line)) {
+        if (isHv(line)) {
             try lines.append(line);
         }
     }
 
     var overlaps = PointSet.init(alloc);
+    defer overlaps.deinit();
 
     var i: usize = 0;
     while (i < lines.items.len) : (i += 1) {
         var j: usize = i + 1;
         while (j < lines.items.len) : (j += 1) {
-            try update_overlaps(lines.items[i], lines.items[j], &overlaps);
+            try updateOverlaps(lines.items[i], lines.items[j], &overlaps);
         }
     }
 
-    std.log.info("part1: {}", .{overlaps.count()});
+    return .{ .part01 = @as(u64, overlaps.count()), .part02 = 0 };
 }
 
 const Line = struct {
@@ -77,7 +71,7 @@ const Point = struct {
     y: usize,
 };
 
-fn update_overlaps(line1: Line, line2: Line, overlaps: *PointSet) !void {
+fn updateOverlaps(line1: Line, line2: Line, overlaps: *PointSet) !void {
     // check where x ranges overlap
     // check where y ranges overlap
     const x_overlap = [2]usize{ std.math.max(line1.min_x(), line2.min_x()), std.math.min(line1.max_x(), line2.max_x()) };
@@ -97,7 +91,7 @@ fn update_overlaps(line1: Line, line2: Line, overlaps: *PointSet) !void {
 }
 
 // horizontal or vertical lines
-fn is_hv(line: Line) bool {
+fn isHv(line: Line) bool {
     return line.point1.x == line.point2.x or line.point1.y == line.point2.y;
 }
 
@@ -120,4 +114,22 @@ fn parseLine(row: []const u8) !Line {
             .y = try parseInt(usize, point2_xy.next().?, 10),
         },
     };
+}
+
+test "test_day05" {
+    const input =
+        \\0,9 -> 5,9
+        \\8,0 -> 0,8
+        \\9,4 -> 3,4
+        \\2,2 -> 2,1
+        \\7,0 -> 7,4
+        \\6,4 -> 2,0
+        \\0,9 -> 2,9
+        \\3,4 -> 1,4
+        \\0,0 -> 8,8
+        \\5,5 -> 8,2
+    ;
+    const out = try run(input, std.testing.allocator);
+    try std.testing.expectEqual(out.part01, 5);
+    try std.testing.expectEqual(out.part02, 0);
 }
