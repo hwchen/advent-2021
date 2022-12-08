@@ -4,7 +4,7 @@ const ArrayList = std.ArrayList;
 const parseInt = std.fmt.parseInt;
 const asc_usize = std.sort.asc(usize);
 
-const data = @embedFile("../input/day07.txt");
+const data = @embedFile("input/day07.txt");
 
 // from prompt
 //const data = "16,1,2,0,4,2,7,1,2,14";
@@ -25,7 +25,7 @@ pub fn main() anyerror!void {
             try res.append(try parseInt(usize, crab, 10));
         }
         std.sort.sort(usize, res.items, {}, asc_usize);
-        break :blk res.toOwnedSlice();
+        break :blk try res.toOwnedSlice();
     };
 
     // initially tried avg, but it's actually median

@@ -14,7 +14,7 @@
 // ```
 
 const std = @import("std");
-const data = @embedFile("../input/day01.txt");
+const data = @embedFile("input/day01.txt");
 
 // required to print if release-fast
 pub const log_level: std.log.Level = .info;

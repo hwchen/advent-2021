@@ -1,6 +1,6 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
-const data = @embedFile("../input/day03.txt");
+const data = @embedFile("input/day03.txt");
 // example from prompt
 //const data =
 //    \\00100
@@ -81,7 +81,7 @@ fn part02() !void {
             try buf.append(x);
         }
 
-        break :blk buf.toOwnedSlice();
+        break :blk try buf.toOwnedSlice();
     };
     // this is actually a no-op w/ arena
     defer alloc.free(input);
@@ -99,7 +99,7 @@ fn part02() !void {
     std.log.info("part 02: {d}", .{oxygen * co2});
 }
 
-fn filter_with(alloc: Allocator, input: []const usize, num_len: usize, f: fn (count: usize, buf_len: usize) bool) !usize {
+fn filter_with(alloc: Allocator, input: []const usize, num_len: usize, f: *const fn (count: usize, buf_len: usize) bool) !usize {
     var buf = std.ArrayList(usize).init(alloc);
     try buf.appendSlice(input);
 

@@ -3,7 +3,7 @@ const Allocator = std.mem.Allocator;
 const ArrayList = std.ArrayList;
 const parseInt = std.fmt.parseInt;
 const PointSet = std.AutoHashMap(Point, void);
-const data = @embedFile("../input/day05.txt");
+const data = @embedFile("input/day05.txt");
 
 // from prompt
 //const data =

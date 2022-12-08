@@ -2,7 +2,7 @@ const std = @import("std");
 const Allocator = std.mem.Allocator;
 const ArrayList = std.ArrayList;
 
-const data = @embedFile("../input/day10.txt");
+const data = @embedFile("input/day10.txt");
 
 // from prompt
 //const data =

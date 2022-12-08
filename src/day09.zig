@@ -1,5 +1,5 @@
 const std = @import("std");
-const data = @embedFile("../input/day09.txt");
+const data = @embedFile("input/day09.txt");
 
 // from prompt
 //const data =

@@ -3,7 +3,7 @@ const Allocator = std.mem.Allocator;
 const ArrayList = std.ArrayList;
 
 const PART_1_STEP_LIMIT = 100;
-const data = @embedFile("../input/day11.txt");
+const data = @embedFile("input/day11.txt");
 
 // from prompt
 //const data =

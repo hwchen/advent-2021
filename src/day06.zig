@@ -2,7 +2,7 @@ const std = @import("std");
 const Allocator = std.mem.Allocator;
 const ArrayList = std.ArrayList;
 const parseInt = std.fmt.parseInt;
-const data = @embedFile("../input/day06.txt");
+const data = @embedFile("input/day06.txt");
 
 // from prompt
 //const data = "3,4,3,1,2";

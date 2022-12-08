@@ -1,7 +1,7 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 const ArrayList = std.ArrayList;
-const data = @embedFile("../input/day04.txt");
+const data = @embedFile("input/day04.txt");
 
 // from prompt
 //const data =
@@ -63,7 +63,7 @@ pub fn main() anyerror!void {
         }
     }
 
-    std.log.info("part01: {d}, part02: {d}", .{ part01, part02 });
+    std.log.info("part01: {d}, part02: {d}", .{ part01.?, part02.? });
 }
 
 const Board = struct {
